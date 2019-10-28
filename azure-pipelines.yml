@@ -32,4 +32,4 @@ steps:
     projects: 'azurtests/*.fsproj'
     arguments: '--configuration Release'
 
-- script: dotnet pack /p:PackageVersion=1.0.$(Build.BuildID) azurts/*.fsproj
+- script: dotnet pack /p:PackageVersion=1.0.$(Rev:r) azurts/*.fsproj
