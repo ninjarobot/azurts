@@ -32,4 +32,11 @@ steps:
     projects: 'azurtests/*.fsproj'
     arguments: '--configuration Release'
 
-- script: dotnet pack /p:PackageVersion=1.0.$(Build.BuildID) azurts/*.fsproj
+- script: dotnet pack -o $(Build.ArtifactStagingDirectory) -c Release /p:PackageVersion=1.0.$(Build.BuildID) azurts/*.fsproj
+- task: NuGetCommand@2
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg;!$(Build.ArtifactStagingDirectory)/*.symbols.nupkg'
+    nuGetFeedType: 'external'
+    publishFeedCredentials: 'Personal Nuget'
+
