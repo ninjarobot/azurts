@@ -115,11 +115,11 @@ module Payload =
                                 Blocks =
                                     [
                                         yield Section (Text (Markdown (heading)))
-                                        yield Context (Elements [ Markdown (alertTimeRange) ])
                                         yield Section (Text (Markdown (alert.Data.Description)))
                                         yield Section (Fields (fields |> List.ofSeq))
                                         if message.IsSome then
                                             yield Section (Text (Markdown (String.Format ("```{0}```", message.Value))))
+                                        yield Context (Elements [ Markdown (alertTimeRange) ])
                                     ]
                             }
                         yield payload
