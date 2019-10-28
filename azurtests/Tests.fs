@@ -20,14 +20,15 @@ let ``Format Webhook Payload`` () =
             Channel = "some_channel"
             Blocks =
                 [
-                    Section.Text (Markdown ":fire: There were some errors going on")
-                    Section.Fields
+                    Section (Text (Markdown ":fire: There were some errors going on"))
+                    Section (Fields
                         [
                             Markdown ("*Tenant*\n50")
                             LabeledText ("Site", "SiteA")
                             LabeledText ("Resource Name", "Resource 1")
                         ]
-                    Section.Text (Markdown "```Some serious stuff went down.```")
+                    )
+                    Section (Text (Markdown "```Some serious stuff went down.```"))
                 ]
         }
     let json = payload |> Payload.format

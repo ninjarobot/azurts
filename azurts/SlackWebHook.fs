@@ -26,16 +26,46 @@ type Section =
         match s with
         | Text (text:Text) ->
             json {
+                do! Json.write "type" "section"
                 do! Json.write "text" text
             }
         | Fields (fields) ->
             json {
+                do! Json.write "type" "section"
                 do! Json.write "fields" fields
             }
+type Context =
+    | Elements of Text list
+    static member ToJson (c: Context) =
+        match c with
+        | Elements (elements) ->
+            json {
+                do! Json.write "type" "context"
+                do! Json.write "elements" elements
+            }
+type Divider =
+    | Divider
+    static member ToJson (d: Divider) =
+        match d with
+        | Divider ->
+            json {
+                do! Json.write "type" "divider"
+            }
+
+type Block =
+    | Context of Context
+    | Divider of Divider
+    | Section of Section
+    static member ToJson (b:Block) =
+        match b with
+        | Context c -> Context.ToJson c
+        | Divider d -> Divider.ToJson d
+        | Section s -> Section.ToJson s
+
 type Payload =
     {
         Channel : string
-        Blocks : Section list
+        Blocks : Block list
     }
     static member ToJson (p:Payload) =
         json {
@@ -63,7 +93,11 @@ module Payload =
     
     let ofAzureAlert (channel:string) (alert:AzureAlert.LogAlert) =
         let heading = String.Format ("{0} *{1}*", alert.Data.Severity |> severityIcon, alert.Data.AlertRuleName)
-        let alertTimeRange = String.Format ("Between <!date^{0}^{{date_num}} {{time_secs}}> and <!date^{1}^{{date_num}} {{time_secs}}>", alert.Data.SearchIntervalStartTime.ToUnixTimeSeconds(), alert.Data.SearchIntervalEndTime.ToUnixTimeSeconds())
+        let alertTimeRange = String.Format ("Between <!date^{0}^{{date_num}} {{time_secs}}|{1}> and <!date^{2}^{{date_num}} {{time_secs}}|{3}>",
+                                            alert.Data.SearchIntervalStartTime.ToUnixTimeSeconds(),
+                                            alert.Data.SearchIntervalStartTime.ToString(),
+                                            alert.Data.SearchIntervalEndTime.ToUnixTimeSeconds(),
+                                            alert.Data.SearchIntervalEndTime.ToString())
         alert.Data.SearchResult.Tables |> List.tryHead |> Option.map
             (
             fun table ->
@@ -80,12 +114,12 @@ module Payload =
                                 Channel = channel
                                 Blocks =
                                     [
-                                        yield Section.Text (Markdown (heading))
-                                        yield Section.Text (Markdown (alertTimeRange))
-                                        yield Section.Text (Markdown (alert.Data.Description))
-                                        yield Section.Fields (fields |> List.ofSeq)
+                                        yield Section (Text (Markdown (heading)))
+                                        yield Context (Elements [ Markdown (alertTimeRange) ])
+                                        yield Section (Text (Markdown (alert.Data.Description)))
+                                        yield Section (Fields (fields |> List.ofSeq))
                                         if message.IsSome then
-                                            yield Section.Text (Markdown (String.Format ("```{0}```", message.Value)))
+                                            yield Section (Text (Markdown (String.Format ("```{0}```", message.Value))))
                                     ]
                             }
                         yield payload
