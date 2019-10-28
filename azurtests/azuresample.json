@@ -1,0 +1,96 @@
+{
+  "schemaId": "Microsoft.Insights/LogAlert",
+  "data": {
+    "SubscriptionId": "BDA4D6DF-29E2-48F1-ACFA-7E024792D1C5",
+    "AlertRuleName": "Some Errors",
+    "SearchQuery": "traces\n| where severityLevel >= 1\n| project operation_Name, \n    message,\n    severityLevel,\n    customDimensions.[\"TenantID\"],\n    customDimensions.[\"SiteName\"],\n    customDimensions.[\"ResourceName\"],\n    customDimensions.[\"ResourceGroup\"],\n    customDimensions.[\"SubscriptionID\"],\n    customDimensions.[\"OrderID\"]",
+    "SearchIntervalStartTimeUtc": "2019-10-08T02:41:22",
+    "SearchIntervalEndtimeUtc": "2019-10-08T02:46:22",
+    "AlertThresholdOperator": "Greater Than",
+    "AlertThresholdValue": 0,
+    "ResultCount": 32,
+    "SearchIntervalInSeconds": 300,
+    "LinkToSearchResults": "https://portal.azure.com#@2659078E-5378-4DF0-AD83-388F6F516F1E/blade/Microsoft_OperationsManagementSuite_Workspace/AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/truncatedstuff",
+    "Description": "Trace errors.",
+    "Severity": "3",
+    "SearchResult": {
+      "tables": [
+        {
+          "name": "PrimaryResult",
+          "columns": [
+            {
+              "name": "operation_Name",
+              "type": "string"
+            },
+            {
+              "name": "message",
+              "type": "string"
+            },
+            {
+              "name": "severityLevel",
+              "type": "int"
+            },
+            {
+              "name": "customDimensions_TenantID",
+              "type": "dynamic"
+            },
+            {
+              "name": "customDimensions_SiteName",
+              "type": "dynamic"
+            },
+            {
+              "name": "customDimensions_ResourceName",
+              "type": "dynamic"
+            },
+            {
+              "name": "customDimensions_ResourceGroup",
+              "type": "dynamic"
+            },
+            {
+              "name": "customDimensions_SubscriptionID",
+              "type": "dynamic"
+            },
+            {
+              "name": "customDimensions_OrderID",
+              "type": "dynamic"
+            }
+          ],
+          "rows": [
+            [
+              "",
+              "Some info message",
+              1,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ],
+            [
+              "",
+              "Another info message",
+              1,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          ]
+        }
+      ],
+      "dataSources": [
+        {
+          "resourceId": "/subscriptions/BDA4D6DF-29E2-48F1-ACFA-7E024792D1C5/resourcegroups/someresourcegroup/providers/microsoft.insights/components/myappinsights",
+          "tables": [
+            "traces"
+          ]
+        }
+      ]
+    },
+    "ApplicationId": "BB62E6CC-BCB1-4AC6-A7A0-CBC5315968DC",
+    "AlertType": "Number of results"
+  }
+}
