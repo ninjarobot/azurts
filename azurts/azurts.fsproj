@@ -2,6 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageLicenseExpression>BSD-2-Clause</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/ninjarobot/azurts</PackageProjectUrl>
+    <Description>Extensions for Azure Alert WebHooks</Description>
+    <Copyright>Copyright (c) 2019 Dave Curylo</Copyright>
+    <PackageTags>azure;fsharp</PackageTags>
+    <Authors>dcurylo</Authors>
   </PropertyGroup>
 
   <ItemGroup>
