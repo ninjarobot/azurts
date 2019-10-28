@@ -33,3 +33,15 @@ let ``Format Webhook Payload`` () =
     let json = payload |> Payload.format
     System.IO.File.WriteAllText ("webhookpayload.json", json)
     ()
+
+[<Fact>]
+let ``Alert to WebHook`` () =
+    let json = System.IO.File.ReadAllText "azuresample.json"
+    let (alert:LogAlert) = json |> LogAlert.parse
+    let payloads = Payload.ofAzureAlert "alertChannel" alert
+    payloads.Value |> Seq.iteri
+        (fun idx payload ->
+            let json = payload |> Payload.format
+            System.IO.File.WriteAllText (String.Format("webhookpayload{0}.json", idx), json)
+        )
+    ()

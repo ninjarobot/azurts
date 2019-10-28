@@ -45,3 +45,49 @@ type Payload =
 module Payload =
     let format (payload:Payload) =
         payload |> Json.serialize |> Json.formatWith JsonFormattingOptions.Pretty
+    
+    let severityIcon (severity:int) =
+        if severity > 2 then ":fire:"
+        elif severity = 2 then ":warning:"
+        else ":information_source:"
+    
+    let private toTitleCase = System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase
+    
+    let dataFromJson (json:Chiron.Json) =
+        match json with
+        | Chiron.Json.String s -> s
+        | Chiron.Json.Number n -> string n
+        | Chiron.Json.Bool b -> string b
+        | Chiron.Json.Null n -> String.Empty
+        | json -> Json.format json
+    
+    let ofAzureAlert (channel:string) (alert:AzureAlert.LogAlert) =
+        let heading = String.Format ("{0} *{1}*", alert.Data.Severity |> severityIcon, alert.Data.AlertRuleName)
+        let alertTimeRange = String.Format ("Between <!date^{0}^{{date_num}} {{time_secs}}> and <!date^{1}^{{date_num}} {{time_secs}}>", alert.Data.SearchIntervalStartTime.ToUnixTimeSeconds(), alert.Data.SearchIntervalEndTime.ToUnixTimeSeconds())
+        alert.Data.SearchResult.Tables |> List.tryHead |> Option.map
+            (
+            fun table ->
+                seq {
+                    for row in table.Rows do
+                        let item = Seq.zip table.Columns row
+                        let fields =
+                            item
+                            |> Seq.filter (fun (column, _) -> column.Name <> "message")
+                            |> Seq.map (fun (column, row) -> LabeledText(column.Name.Replace("customDimensions_", ""), dataFromJson row ))
+                        let message = item |> Seq.tryFind (fun (column, _) -> column.Name = "message") |> Option.map (fun (_, row) -> dataFromJson row)
+                        let payload =
+                            {
+                                Channel = channel
+                                Blocks =
+                                    [
+                                        yield Section.Text (Markdown (heading))
+                                        yield Section.Text (Markdown (alertTimeRange))
+                                        yield Section.Text (Markdown (alert.Data.Description))
+                                        yield Section.Fields (fields |> List.ofSeq)
+                                        if message.IsSome then
+                                            yield Section.Text (Markdown (String.Format ("```{0}```", message.Value)))
+                                    ]
+                            }
+                        yield payload
+                }
+            )

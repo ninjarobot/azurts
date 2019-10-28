@@ -57,15 +57,15 @@
           ],
           "rows": [
             [
-              "",
+              "AnOperation",
               "Some info message",
               1,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null
+              42,
+              "SiteA",
+              "ResourceOne",
+              "MyResources",
+              "a7302b32-f9ee-472c-99dc-e157c3d0a56c",
+              "28801117-8e5e-4c04-b6ef-d041688536a7"
             ],
             [
               "",

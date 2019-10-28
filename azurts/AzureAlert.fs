@@ -54,6 +54,7 @@ type LogAlertData =
     {
         SubscriptionId : string
         AlertRuleName : string
+        Description : string
         SearchIntervalStartTime : DateTimeOffset
         SearchIntervalEndTime : DateTimeOffset
         Severity : int
@@ -64,6 +65,7 @@ type LogAlertData =
         json {
             let! sub = Json.read "SubscriptionId"
             let! alertRuleName = Json.read "AlertRuleName"
+            let! description = Json.read "Description"
             let! searchIntStart = Json.read "SearchIntervalStartTimeUtc"
             let! searchIntEnd = Json.read "SearchIntervalEndtimeUtc"
             let! severity = Json.read "Severity"
@@ -73,6 +75,7 @@ type LogAlertData =
                 {
                     SubscriptionId = sub
                     AlertRuleName = alertRuleName
+                    Description = description
                     SearchIntervalStartTime = DateTimeOffset.Parse searchIntStart
                     SearchIntervalEndTime = DateTimeOffset.Parse searchIntEnd
                     Severity = Int32.Parse severity
