@@ -31,3 +31,5 @@ steps:
     command: test
     projects: 'azurtests/*.fsproj'
     arguments: '--configuration Release'
+
+- script: dotnet pack /p:PackageVersion=1.0.$(BuildID) azurts/*.fsproj
