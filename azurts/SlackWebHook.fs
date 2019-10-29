@@ -88,7 +88,7 @@ module Payload =
         | Chiron.Json.String s -> s
         | Chiron.Json.Number n -> string n
         | Chiron.Json.Bool b -> string b
-        | Chiron.Json.Null n -> String.Empty
+        | Chiron.Json.Null _ -> String.Empty
         | json -> Json.format json
     
     let ofAzureAlert (channel:string) (alert:AzureAlert.LogAlert) =
@@ -107,6 +107,7 @@ module Payload =
                         let fields =
                             item
                             |> Seq.filter (fun (column, _) -> column.Name <> "message")
+                            |> Seq.filter (fun (column, row) -> match row with | Json.Null _ -> false | _ -> true )
                             |> Seq.map (fun (column, row) -> LabeledText(column.Name.Replace("customDimensions_", ""), dataFromJson row ))
                         let message = item |> Seq.tryFind (fun (column, _) -> column.Name = "message") |> Option.map (fun (_, row) -> dataFromJson row)
                         let payload =
@@ -115,7 +116,8 @@ module Payload =
                                 Blocks =
                                     [
                                         yield Section (Text (Markdown (heading)))
-                                        yield Section (Text (Markdown (alert.Data.Description)))
+                                        if not (String.IsNullOrEmpty alert.Data.Description) then
+                                            yield Section (Text (Markdown (alert.Data.Description)))
                                         yield Section (Fields (fields |> List.ofSeq))
                                         if message.IsSome then
                                             yield Section (Text (Markdown (String.Format ("```{0}```", message.Value))))
