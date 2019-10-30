@@ -85,7 +85,13 @@ module Payload =
     
     let dataFromJson (json:Chiron.Json) =
         match json with
-        | Chiron.Json.String s -> s
+        | Chiron.Json.String s ->
+            let len = s.Length
+            // Max length for Slack section text is 3000.
+            if len > 3000 then // Grab the last 3000, usually later data is more relevant.
+                s.Substring (len - 3000, 3000)
+            else
+                s
         | Chiron.Json.Number n -> string n
         | Chiron.Json.Bool b -> string b
         | Chiron.Json.Null _ -> String.Empty
