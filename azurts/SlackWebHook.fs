@@ -76,8 +76,10 @@ module Payload =
     let format (payload:Payload) =
         payload |> Json.serialize |> Json.formatWith JsonFormattingOptions.Pretty
     
+    /// Azure Alert severity: 0 = critical, 1 = error, 2 = warning, 3 = informational, 4 = verbose
     let severityIcon (severity:int) =
-        if severity > 2 then ":fire:"
+        if severity = 0 then ":bomb:"
+        elif severity = 1 then ":fire:"
         elif severity = 2 then ":warning:"
         else ":information_source:"
     
