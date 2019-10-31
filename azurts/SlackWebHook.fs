@@ -90,8 +90,8 @@ module Payload =
         | Chiron.Json.String s ->
             let len = s.Length
             // Max length for Slack section text is 3000.
-            if len > 2900 then // Grab the last 2900 leaving a little for formatting, usually later data is more relevant.
-                s.Substring (len - 2900, 2900)
+            if len > 2900 then // Grab the first 2900 leaving a little for formatting. Alert payloads already may be truncated.
+                s.Substring (0, 2900)
             else
                 s
         | Chiron.Json.Number n -> string n
