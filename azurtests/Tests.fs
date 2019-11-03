@@ -3,9 +3,8 @@ module Tests
 open System
 open Xunit
 open azurts.AzureAlert
+open azurts.Hook
 open azurts.SlackWebHook
-
-open azurts
 
 [<Fact>]
 let ``Parse Alert`` () =
@@ -46,3 +45,52 @@ let ``Alert to WebHook`` () =
             System.IO.File.WriteAllText (String.Format("webhookpayload{0}.json", idx), json)
         )
     ()
+
+[<Fact>]
+let ``Compose Handlers`` () =
+    /// Parses incoming Azure Alert payload
+    let incomingAzAlert =
+        fun json ->
+            let (alert:LogAlert) = json |> LogAlert.parse
+            Some alert
+    /// Filters out items we don't want.
+    let filteringHook =
+        fun (alert:LogAlert) ->
+            // Just process the first table
+            alert.Data.SearchResult.Tables |> Seq.tryHead |> Option.map
+                (fun table ->
+                    let importantAlerts = 
+                        match table.Columns |> List.tryFindIndex (fun col -> col.Name.Contains("severityLevel", StringComparison.InvariantCultureIgnoreCase)) with
+                        | Some severityIndex ->
+                            // Severity > 2 = error.
+                            table.Rows |> Seq.filter (fun row -> (row |> Seq.item severityIndex) = Chiron.Json.Number 2M)
+                        | None -> Seq.empty
+                    let filteredTable = { table with Rows = importantAlerts |> List.ofSeq }
+                    {
+                        alert with Data = {
+                                alert.Data with SearchResult = {
+                                            alert.Data.SearchResult with
+                                                Tables = [ filteredTable ]
+                                        }
+                            }
+                    }
+                )
+                    
+    // Builds a slack webhook payload
+    let slackHook =
+        fun (alert:LogAlert) ->
+            Payload.ofAzureAlert "alertChannel" alert
+    // Since it's just a test, write to files.
+    let writeToFiles =
+        fun (payloads:Payload seq) ->
+            payloads |> Seq.iteri
+                (fun idx payload ->
+                    let json = payload |> Payload.format
+                    System.IO.File.WriteAllText (String.Format("webhookpayloadcomposed{0}.json", idx), json)
+                )
+            |> Some
+    let composed = incomingAzAlert >=> filteringHook >=> slackHook >=> writeToFiles
+    let json = System.IO.File.ReadAllText "azuresample.json"
+    match json |> composed with
+    | Some () -> printfn "handled alerts"
+    | None -> failwith "didn't handle alerts"

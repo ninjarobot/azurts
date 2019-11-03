@@ -8,7 +8,7 @@ Azure Monitor includes alerts that can send the alert data to a webhook, and tho
 The processing pipeline is made of composable parts so that different customizations can be included when handling a webhook. It uses a ["railway"](https://fsharpforfunandprofit.com/posts/recipe-part2/) style of composition that makes it relatively simple to chain together a series of parts.
 
 ```fsharp
-type Hook = a' -> Async<b' option>
+type Hook = a' -> b' option
 
 // composing multiple Hook functions with a railroad operator
 let webhookPipeline = incomingAzAlert >=> filteringHook >=> slackHook
