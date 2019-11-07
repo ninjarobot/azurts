@@ -101,11 +101,12 @@ module Payload =
     
     let ofAzureAlert (channel:string) (alert:AzureAlert.LogAlert) =
         let heading = String.Format ("{0} *{1}*", alert.Data.Severity |> severityIcon, alert.Data.AlertRuleName)
-        let alertTimeRange = String.Format ("Between <!date^{0}^{{date_num}} {{time_secs}}|{1}> and <!date^{2}^{{date_num}} {{time_secs}}|{3}>",
+        let alertTimeRange = String.Format ("Between <!date^{0}^{{date_num}} {{time_secs}}|{1}> and <!date^{2}^{{date_num}} {{time_secs}}|{3}> <{4}|Search Results>",
                                             alert.Data.SearchIntervalStartTime.ToUnixTimeSeconds(),
                                             alert.Data.SearchIntervalStartTime.ToString(),
                                             alert.Data.SearchIntervalEndTime.ToUnixTimeSeconds(),
-                                            alert.Data.SearchIntervalEndTime.ToString())
+                                            alert.Data.SearchIntervalEndTime.ToString(),
+                                            alert.Data.LinkToSearchResults)
         alert.Data.SearchResult.Tables |> List.tryHead |> Option.map
             (
             fun table ->
