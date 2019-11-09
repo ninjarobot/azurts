@@ -124,3 +124,22 @@ module Filters =
             else None
     
     /// Filters based on a column value in the search result data.
+    let fieldValue (fieldName:string) (expectedValue:string) =
+        fun (alert:LogAlert) ->
+            alert.Data.SearchResult.Tables |> Seq.tryHead |> Option.map
+                (fun table ->
+                    let importantAlerts = 
+                        match table.Columns |> List.tryFindIndex (fun col -> col.Name.ToLowerInvariant().Contains(fieldName.ToLowerInvariant())) with
+                        | Some rowIndex ->
+                            table.Rows |> Seq.filter (fun row -> Some(expectedValue) = (row |> Seq.item rowIndex |> Json.tryDeserialize |> function | Choice1Of2 s -> Some s | Choice2Of2 _ -> None))
+                        | None -> Seq.empty
+                    let filteredTable = { table with Rows = importantAlerts |> List.ofSeq }
+                    {
+                        alert with Data = {
+                                alert.Data with SearchResult = {
+                                            alert.Data.SearchResult with
+                                                Tables = [ filteredTable ]
+                                        }
+                            }
+                    }
+                )

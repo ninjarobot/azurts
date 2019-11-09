@@ -121,3 +121,11 @@ let ``Subscription filter (inclusive)`` () =
     |> randomSubscription |> function
     | Some _ -> ()
     | None -> failwith "Filtered out alert that should match subscription"
+
+[<Fact>]
+let ``Alert custom field found`` () =
+    let byResourceName = incomingAzAlert >=> Filters.fieldValue "customDimensions_ResourceName" "ResourceOne"
+    System.IO.File.ReadAllText "azuresample.json"
+    |> byResourceName |> function
+    | Some _ -> ()
+    | None -> failwith "Expected to find by ResourceName"
