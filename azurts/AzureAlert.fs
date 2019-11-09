@@ -98,7 +98,29 @@ type LogAlert =
                     Data = data
                 }
         }
-module LogAlert =
+module Alert =
     let parse json =
         let (alert:LogAlert) = json |> Json.parse |> Json.deserialize
         alert
+
+module Filters =
+    /// Includes alerts that are above an inclusive minimum alert severity
+    let minimumSeverity (minimum:int) =
+        fun (alert:LogAlert) ->
+            if alert.Data.Severity >= minimum then Some alert
+            else None
+    
+    /// Includes only alerts that are below an inclusive maximum alert severity
+    let maximumSeverity (maximum:int) =
+        fun (alert:LogAlert) ->
+            if alert.Data.Severity <= maximum then Some alert
+            else None
+    
+    /// Includes only alerts for the given subscription
+    let subscriptionId (sub:string) =
+        fun (alert:LogAlert) ->
+            if String.IsNullOrEmpty (alert.Data.SubscriptionId) then None
+            elif alert.Data.SubscriptionId.Equals (sub, StringComparison.InvariantCultureIgnoreCase) then Some alert
+            else None
+    
+    /// Filters based on a column value in the search result data.
