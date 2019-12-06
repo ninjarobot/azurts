@@ -129,3 +129,32 @@ let ``Alert custom field found`` () =
     |> byResourceName |> function
     | Some _ -> ()
     | None -> failwith "Expected to find by ResourceName"
+
+[<Fact>]
+let ``Broadcast to many`` () =
+    let mutable one = false
+    let mutable two = false
+    
+    let toMany =
+        broadcast
+            [
+                fun (_:LogAlert) -> async { one <- true } |> Some
+                fun (_:LogAlert) -> async { two <- true } |> Some
+            ]
+    
+    let sendAlertToMany = incomingAzAlert >=> toMany
+    System.IO.File.ReadAllText "azuresample.json"
+    |> sendAlertToMany |> function
+    | Some hook -> hook |> Async.RunSynchronously
+    | None -> failwith "Expected a hook to run"
+    Assert.True(one)
+    Assert.True(two)
+
+/// Make sure it returns None when there is nowhere to broadcast.
+[<Fact>]
+let ``Broadcast to none`` () =
+    let sendAlertToNone = incomingAzAlert >=> broadcast []
+    System.IO.File.ReadAllText "azuresample.json"
+    |> sendAlertToNone |> function
+    | Some _ -> failwith "Expected None as a hook"
+    | None -> ()
