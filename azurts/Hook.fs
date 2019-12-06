@@ -15,4 +15,8 @@ let broadcast (hooks: Hook<'a, Async<unit>> list) =
         |> List.choose id
         |> function
         | [] -> None
-        | filteredHooks -> filteredHooks |> Async.Parallel |> Async.Ignore |> Some
+        | filteredHooks ->
+            async {
+                for hook in filteredHooks do
+                    do! hook
+            } |> Some
