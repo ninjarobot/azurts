@@ -102,6 +102,16 @@ module Alert =
     let parse json =
         let (alert:LogAlert) = json |> Json.parse |> Json.deserialize
         alert
+    
+    /// Parses and deserializes JSON into Some LogAlert or None if there
+    /// are parsing or deserialization errors.
+    let tryParse json : LogAlert option =
+        match Json.tryParse json with
+        | Choice1Of2 parsed ->
+            match Json.tryDeserialize parsed with
+            | Choice1Of2 alert -> Some alert
+            | Choice2Of2 _ -> None
+        | Choice2Of2 _ -> None
 
 module Filters =
     /// Includes alerts that are above an inclusive minimum alert severity

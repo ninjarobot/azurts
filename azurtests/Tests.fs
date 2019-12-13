@@ -46,11 +46,11 @@ let ``Alert to WebHook`` () =
         )
     ()
 
-/// Parses incoming Azure Alert payload
-let incomingAzAlert =
-    fun json ->
-        let (alert:LogAlert) = json |> Alert.parse
-        Some alert
+[<Fact>]
+let ``Bad incoming json`` () =
+    "foobar" |> Alert.tryParse |> function
+    | Some _ -> failwith "Bad JSON should have been ignored, but had Some value"
+    | None -> ()
 
 [<Fact>]
 let ``Compose Handlers`` () =
@@ -90,7 +90,7 @@ let ``Compose Handlers`` () =
                     System.IO.File.WriteAllText (String.Format("webhookpayloadcomposed{0}.json", idx), json)
                 )
             |> Some
-    let composed = incomingAzAlert >=> filteringHook >=> slackHook >=> writeToFiles
+    let composed = Alert.tryParse >=> filteringHook >=> slackHook >=> writeToFiles
     let json = System.IO.File.ReadAllText "azuresample.json"
     match json |> composed with
     | Some () -> printfn "handled alerts"
@@ -98,25 +98,25 @@ let ``Compose Handlers`` () =
 
 [<Fact>]
 let ``Minimum severity filter`` () =
-    let onlySev4 = incomingAzAlert >=> Filters.minimumSeverity 4
+    let onlySev4 = Alert.tryParse >=> Filters.minimumSeverity 4
     System.IO.File.ReadAllText "azuresample.json"
     |> onlySev4 |> Option.iter (fun _ -> failwith "Got an alert that wasn't minimum severity 4")
 
 [<Fact>]
 let ``Maximum severity filter`` () =
-    let belowSev3 = incomingAzAlert >=> Filters.maximumSeverity 2
+    let belowSev3 = Alert.tryParse >=> Filters.maximumSeverity 2
     System.IO.File.ReadAllText "azuresample.json"
     |> belowSev3 |> Option.iter (fun _ -> failwith "Got an alert that wasn't maximum severity 2")
 
 [<Fact>]
 let ``Subscription filter (exclusive)`` () =
-    let randomSubscription = incomingAzAlert >=> Filters.subscriptionId (Guid.NewGuid().ToString())
+    let randomSubscription = Alert.tryParse >=> Filters.subscriptionId (Guid.NewGuid().ToString())
     System.IO.File.ReadAllText "azuresample.json"
     |> randomSubscription |> Option.iter (fun _ -> failwith "Got an alert when subscription didn't match")
 
 [<Fact>]
 let ``Subscription filter (inclusive)`` () =
-    let randomSubscription = incomingAzAlert >=> Filters.subscriptionId ("bda4d6df-29e2-48f1-acfa-7E024792d1c5")
+    let randomSubscription = Alert.tryParse >=> Filters.subscriptionId ("bda4d6df-29e2-48f1-acfa-7E024792d1c5")
     System.IO.File.ReadAllText "azuresample.json"
     |> randomSubscription |> function
     | Some _ -> ()
@@ -124,7 +124,7 @@ let ``Subscription filter (inclusive)`` () =
 
 [<Fact>]
 let ``Alert custom field found`` () =
-    let byResourceName = incomingAzAlert >=> Filters.fieldValue "customDimensions_ResourceName" "ResourceOne"
+    let byResourceName = Alert.tryParse >=> Filters.fieldValue "customDimensions_ResourceName" "ResourceOne"
     System.IO.File.ReadAllText "azuresample.json"
     |> byResourceName |> function
     | Some _ -> ()
@@ -142,7 +142,7 @@ let ``Broadcast to many`` () =
                 fun (_:LogAlert) -> async { two <- true } |> Some
             ]
     
-    let sendAlertToMany = incomingAzAlert >=> toMany
+    let sendAlertToMany = Alert.tryParse >=> toMany
     System.IO.File.ReadAllText "azuresample.json"
     |> sendAlertToMany |> function
     | Some hook -> hook |> Async.RunSynchronously
@@ -153,7 +153,7 @@ let ``Broadcast to many`` () =
 /// Make sure it returns None when there is nowhere to broadcast.
 [<Fact>]
 let ``Broadcast to none`` () =
-    let sendAlertToNone = incomingAzAlert >=> broadcast []
+    let sendAlertToNone = Alert.tryParse >=> broadcast []
     System.IO.File.ReadAllText "azuresample.json"
     |> sendAlertToNone |> function
     | Some _ -> failwith "Expected None as a hook"
