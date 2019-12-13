@@ -74,6 +74,14 @@ type Payload =
             do! Json.write "channel" p.Channel
             do! Json.write "blocks" p.Blocks
         }
+type SlackWebHookConfig =
+    {
+        Client : HttpClient
+        Token : string option
+        WebHookUri : System.Uri
+        ErrorCallback : System.Net.HttpStatusCode * string -> unit
+    }
+    
 module Payload =
     let format (payload:Payload) =
         payload |> Json.serialize |> Json.formatWith JsonFormattingOptions.Pretty
@@ -138,14 +146,6 @@ module Payload =
                         yield payload
                 }
             )
-    
-    type SlackWebHookConfig =
-        {
-            Client : HttpClient
-            Token : string option
-            WebHookUri : System.Uri
-            ErrorCallback : System.Net.HttpStatusCode * string -> unit
-        }
     
     let sendToSlack (config:SlackWebHookConfig) (payloads:Payload seq) =
         async {
