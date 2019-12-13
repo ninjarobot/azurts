@@ -1,6 +1,8 @@
 ﻿module azurts.SlackWebHook
 
 open System
+open System.Net.Http
+open System.Text
 open Chiron
 
 type Text =
@@ -99,7 +101,7 @@ module Payload =
         | Chiron.Json.Null _ -> String.Empty
         | json -> Json.format json
     
-    let ofAzureAlert (channel:string) (alert:AzureAlert.LogAlert) =
+    let ofAzureAlert (channel:string) (alert:AzureAlert.LogAlert) : Payload seq option =
         let heading = String.Format ("{0} *{1}*", alert.Data.Severity |> severityIcon, alert.Data.AlertRuleName)
         let alertTimeRange = String.Format ("Between <!date^{0}^{{date_num}} {{time_secs}}|{1}> and <!date^{2}^{{date_num}} {{time_secs}}|{3}> <{4}|Search Results>",
                                             alert.Data.SearchIntervalStartTime.ToUnixTimeSeconds(),
@@ -136,3 +138,25 @@ module Payload =
                         yield payload
                 }
             )
+    
+    type SlackWebHookConfig =
+        {
+            Client : HttpClient
+            Token : string option
+            WebHookUri : System.Uri
+            ErrorCallback : System.Net.HttpStatusCode * string -> unit
+        }
+    
+    let sendToSlack (config:SlackWebHookConfig) (payloads:Payload seq) =
+        async {
+            for payload in payloads do
+                use content = new StringContent (payload |> Json.serialize |> Json.format, Encoding.UTF8, "application/json")
+                use request = new HttpRequestMessage (HttpMethod.Post, config.WebHookUri, Content=content)
+                config.Token |> Option.iter (fun token ->
+                    request.Headers.Authorization <- System.Net.Http.Headers.AuthenticationHeaderValue ("Bearer", token)
+                )
+                use! response = request |> config.Client.SendAsync |> Async.AwaitTask
+                if not response.IsSuccessStatusCode then
+                    let! responseBody = response.Content.ReadAsStringAsync () |> Async.AwaitTask
+                    config.ErrorCallback (response.StatusCode, responseBody)
+        } |> Some
