@@ -121,29 +121,41 @@ module Payload =
             (
             fun table ->
                 seq {
-                    for row in table.Rows do
-                        let item = Seq.zip table.Columns row
-                        let fields =
-                            item
-                            |> Seq.filter (fun (column, _) -> column.Name <> "message")
-                            |> Seq.filter (fun (column, row) -> match row with | Json.Null _ -> false | _ -> true )
-                            |> Seq.map (fun (column, row) -> LabeledText(column.Name.Replace("customDimensions_", ""), dataFromJson row ))
-                        let message = item |> Seq.tryFind (fun (column, _) -> column.Name = "message") |> Option.map (fun (_, row) -> dataFromJson row)
-                        let payload =
-                            {
-                                Channel = channel
-                                Blocks =
-                                    [
-                                        yield Section (Text (Markdown (heading)))
-                                        if not (String.IsNullOrEmpty alert.Data.Description) then
-                                            yield Section (Text (Markdown (alert.Data.Description)))
-                                        yield Section (Fields (fields |> List.ofSeq))
-                                        if message.IsSome then
-                                            yield Section (Text (Markdown (String.Format ("```{0}```", message.Value))))
-                                        yield Context (Elements [ Markdown (alertTimeRange) ])
-                                    ]
-                            }
-                        yield payload
+                    if table.Rows.Length > 0 then
+                        for row in table.Rows do
+                            let item = Seq.zip table.Columns row
+                            let fields =
+                                item
+                                |> Seq.filter (fun (column, _) -> column.Name <> "message")
+                                |> Seq.filter (fun (column, row) -> match row with | Json.Null _ -> false | _ -> true )
+                                |> Seq.map (fun (column, row) -> LabeledText(column.Name.Replace("customDimensions_", ""), dataFromJson row ))
+                            let message = item |> Seq.tryFind (fun (column, _) -> column.Name = "message") |> Option.map (fun (_, row) -> dataFromJson row)
+                            yield
+                                {
+                                    Channel = channel
+                                    Blocks =
+                                        [
+                                            yield Section (Text (Markdown (heading)))
+                                            if not (String.IsNullOrEmpty alert.Data.Description) then
+                                                yield Section (Text (Markdown (alert.Data.Description)))
+                                            yield Section (Fields (fields |> List.ofSeq))
+                                            if message.IsSome then
+                                                yield Section (Text (Markdown (String.Format ("```{0}```", message.Value))))
+                                            yield Context (Elements [ Markdown (alertTimeRange) ])
+                                        ]
+                                }
+                    else
+                            yield
+                                {
+                                    Channel = channel
+                                    Blocks =
+                                        [
+                                            yield Section (Text (Markdown (heading)))
+                                            if not (String.IsNullOrEmpty alert.Data.Description) then
+                                                yield Section (Text (Markdown (alert.Data.Description)))
+                                            yield Context (Elements [ Markdown (alertTimeRange) ])
+                                        ]
+                                }
                 }
             )
     
