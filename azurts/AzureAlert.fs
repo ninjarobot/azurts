@@ -38,16 +38,34 @@ type Table =
                     Rows = rows
                 }
         }
+type DataSource =
+    {
+        ResourceId : string
+        Tables : string list
+    }
+    static member FromJson (_:DataSource) =
+        json {
+            let! resourceId = Json.read "resourceId"
+            let! tables = Json.read "tables"
+            return
+                {
+                    ResourceId = resourceId
+                    Tables = tables
+                }
+        }
 type SearchResult =
     {
         Tables : Table list
+        DataSources : DataSource list
     }
     static member FromJson (_:SearchResult) =
         json {
             let! tables = Json.read "tables"
+            let! dataSources = Json.read "dataSources"
             return
                 {
                     Tables = tables
+                    DataSources = dataSources
                 }
         }
 type LogAlertData =
