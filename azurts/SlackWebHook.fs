@@ -144,18 +144,18 @@ module Payload =
                                             yield Context (Elements [ Markdown (alertTimeRange) ])
                                         ]
                                 }
-                    else
-                            yield
-                                {
-                                    Channel = channel
-                                    Blocks =
-                                        [
-                                            yield Section (Text (Markdown (heading)))
-                                            if not (String.IsNullOrEmpty alert.Data.Description) then
-                                                yield Section (Text (Markdown (alert.Data.Description)))
-                                            yield Context (Elements [ Markdown (alertTimeRange) ])
-                                        ]
-                                }
+                    elif not (String.IsNullOrWhiteSpace alert.Data.Description) then
+                        yield
+                            {
+                                Channel = channel
+                                Blocks =
+                                    [
+                                        yield Section (Text (Markdown (heading)))
+                                        if not (String.IsNullOrEmpty alert.Data.Description) then
+                                            yield Section (Text (Markdown (alert.Data.Description)))
+                                        yield Context (Elements [ Markdown (alertTimeRange) ])
+                                    ]
+                            }
                 }
             )
     
