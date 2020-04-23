@@ -122,7 +122,7 @@ module MessageCard =
         else "Information"
 
     let ofAzureAlert (channel:string) (alert:AzureAlert.LogAlert) : MessageCard seq option =
-        let alertAction = Action.OpenUri (Name="View Logs", Targets=[{Os=OpenUriTargetOS.Default; Uri=alert.Data.LinkToSearchResults |> Uri}])
+        let alertAction = Action.OpenUri (Name="View Logs", Targets=[{Os=OpenUriTargetOS.Default; Uri=System.Uri.EscapeUriString alert.Data.LinkToSearchResults |> Uri}])
         let activityTitle = alert.Data.Severity |> severity
         let activitySubtitle = String.Format ("{0} to {1}",
                                               alert.Data.SearchIntervalStartTime,
