@@ -13,6 +13,7 @@
   <ItemGroup>
     <Compile Include="AzureAlert.fs" />
     <Compile Include="SlackWebHook.fs" />
+    <Compile Include="TeamsWebHook.fs" />
     <Compile Include="Hook.fs" />
   </ItemGroup>
 
