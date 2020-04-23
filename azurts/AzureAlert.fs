@@ -156,10 +156,19 @@ module Filters =
         fun (alert:LogAlert) ->
             alert.Data.SearchResult.Tables |> Seq.tryHead |> Option.map
                 (fun table ->
-                    let importantAlerts = 
+                    let importantAlerts =
                         match table.Columns |> List.tryFindIndex (fun col -> col.Name.ToLowerInvariant().Contains(fieldName.ToLowerInvariant())) with
                         | Some rowIndex ->
-                            table.Rows |> Seq.filter (fun row -> Some(expectedValue) = (row |> Seq.item rowIndex |> Json.tryDeserialize |> function | Choice1Of2 s -> Some s | Choice2Of2 _ -> None))
+                            let colNames = table.Columns |> List.map (fun c -> c.Name)
+                            seq {
+                                for row in table.Rows do
+                                    let lookup = Seq.zip colNames row |> dict
+                                    if lookup.[fieldName] = (expectedValue |> Json.serialize) then
+                                        yield row
+                                    //let d = row |> Seq.item rowIndex |> Json.tryDeserialize |> function Choice1Of2 s -> Some s | Choice2Of2 _ -> None
+                                    //if d = Some(expectedValue) then
+                                    //    yield row
+                            }
                         | None -> Seq.empty
                     let filteredTable = { table with Rows = importantAlerts |> List.ofSeq }
                     {

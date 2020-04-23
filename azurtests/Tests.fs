@@ -131,6 +131,14 @@ let ``Alert custom field found`` () =
     | None -> failwith "Expected to find by ResourceName"
 
 [<Fact>]
+let ``Alert filter custom field not found`` () =
+    let byResourceName = Alert.tryParse >=> Filters.fieldValue "customDimensions_ResourceName" "FooBar"
+    System.IO.File.ReadAllText "azuresample.json"
+    |> byResourceName |> function
+    | Some _ -> failwith "Expected not to find ResourceName = FooBar"
+    | None -> ()
+
+[<Fact>]
 let ``Broadcast to many`` () =
     let mutable one = false
     let mutable two = false
