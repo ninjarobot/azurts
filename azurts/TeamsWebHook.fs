@@ -121,7 +121,7 @@ module MessageCard =
         elif severity = 2 then "Warning"
         else "Information"
 
-    let ofAzureAlert (channel:string) (alert:AzureAlert.LogAlert) : MessageCard seq option =
+    let ofAzureAlert (alert:AzureAlert.LogAlert) : MessageCard seq option =
         let alertAction = Action.OpenUri (Name="View Logs", Targets=[{Os=OpenUriTargetOS.Default; Uri=System.Uri.EscapeUriString alert.Data.LinkToSearchResults |> Uri}])
         let activityTitle = alert.Data.Severity |> severity
         let activitySubtitle = String.Format ("{0} to {1}",
@@ -140,45 +140,46 @@ module MessageCard =
                                 |> Seq.filter (fun (column, row) -> match row with | Json.Null _ -> false | _ -> true )
                                 |> Seq.map (fun (column, row) -> { Name = column.Name.Replace("customDimensions_", ""); Value = dataFromJson row })
                             let message = item |> Seq.tryFind (fun (column, _) -> column.Name = "message") |> Option.map (fun (_, row) -> dataFromJson row)
+                            yield
+                                {
+                                    ThemeColor = "0076D7"
+                                    Summary = alert.Data.AlertRuleName
+                                    PotentialActions = [ alertAction ]
+                                    Sections =
+                                        [
+                                            yield
+                                                {
+                                                    Title = None
+                                                    StartGroup = None
+                                                    ActivityTitle = Some activityTitle
+                                                    ActivitySubtitle = Some activitySubtitle
+                                                    ActivityImage = None
+                                                    ActivityText = alert.Data.Description |> Option.ofObj
+                                                    Facts = Some (facts |> List.ofSeq)
+                                                    Text = None
+                                                }
+                                            if message.IsSome then
+                                                yield
+                                                    {
+                                                        Title = None
+                                                        StartGroup = None
+                                                        ActivityTitle = None
+                                                        ActivitySubtitle = None
+                                                        ActivityImage = None
+                                                        ActivityText = None
+                                                        Facts = None
+                                                        Text = Some (String.Format("""<pre>{0}</pre>""", (System.Net.WebUtility.HtmlEncode(message.Value))))
+                                                    }
+                                        ]
+                                }
+                    elif not (String.IsNullOrWhiteSpace alert.Data.Description) then
+                        yield
                             {
                                 ThemeColor = "0076D7"
                                 Summary = alert.Data.AlertRuleName
                                 PotentialActions = [ alertAction ]
                                 Sections =
                                     [
-                                        yield
-                                            {
-                                                Title = None
-                                                StartGroup = None
-                                                ActivityTitle = Some activityTitle
-                                                ActivitySubtitle = Some activitySubtitle
-                                                ActivityImage = None
-                                                ActivityText = alert.Data.Description |> Option.ofObj
-                                                Facts = Some (facts |> List.ofSeq)
-                                                Text = None
-                                            }
-                                        if message.IsSome then
-                                            yield
-                                                {
-                                                    Title = None
-                                                    StartGroup = None
-                                                    ActivityTitle = None
-                                                    ActivitySubtitle = None
-                                                    ActivityImage = None
-                                                    ActivityText = None
-                                                    Facts = None
-                                                    Text = Some (String.Format("""<pre>{0}</pre>""", (System.Net.WebUtility.HtmlEncode(message.Value))))
-                                                }
-                                    ]
-                            }
-                    else
-                        {
-                            ThemeColor = "0076D7"
-                            Summary = alert.Data.AlertRuleName
-                            PotentialActions = [ alertAction ]
-                            Sections =
-                                [
-                                    yield
                                         {
                                             Title = None
                                             StartGroup = None
@@ -189,8 +190,8 @@ module MessageCard =
                                             Facts = None
                                             Text = None
                                         }
-                                ]
-                        }
+                                    ]
+                            }
                 }
             )
     
