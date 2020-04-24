@@ -110,8 +110,8 @@ module MessageCard =
         | Chiron.Json.String s ->
             let len = s.Length
             // Max size for Teams MessageCard is 25K.
-            if len > 20000 then // Grab the first 20000 so the message won't end up too big.
-                s.Substring (0, 20000)
+            if len > 15_000 then // Grab the first 15,000 so the message won't end up too big.
+                s.Substring (0, 15_000)
             else
                 s
         | Chiron.Json.Number n -> string n
