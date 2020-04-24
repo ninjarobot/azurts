@@ -63,7 +63,7 @@ type OpenUriTarget =
     static member ToJson (target:OpenUriTarget) =
         json {
             do! Json.write "os" target.Os
-            do! Json.write "uri" (string target.Uri)
+            do! Json.write "uri" target.Uri.AbsoluteUri
         }
 
 type Action =
