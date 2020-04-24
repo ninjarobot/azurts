@@ -105,11 +105,15 @@ module MessageCard =
     let format (messageCard:MessageCard) =
         messageCard |> Json.serialize |> Json.formatWith JsonFormattingOptions.Pretty
     
-    let private toTitleCase = System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase
-    
-    let dataFromJson (json:Chiron.Json) =
+    let private dataFromJson (json:Chiron.Json) =
         match json with
-        | Chiron.Json.String s -> s
+        | Chiron.Json.String s ->
+            let len = s.Length
+            // Max size for Teams MessageCard is 25K.
+            if len > 20000 then // Grab the first 20000 so the message won't end up too big.
+                s.Substring (0, 20000)
+            else
+                s
         | Chiron.Json.Number n -> string n
         | Chiron.Json.Bool b -> string b
         | Chiron.Json.Null _ -> String.Empty
@@ -137,7 +141,7 @@ module MessageCard =
                             let facts =
                                 item
                                 |> Seq.filter (fun (column, _) -> column.Name <> "message")
-                                |> Seq.filter (fun (column, row) -> match row with | Json.Null _ -> false | _ -> true )
+                                |> Seq.filter (fun (_, row) -> match row with | Json.Null _ -> false | _ -> true )
                                 |> Seq.map (fun (column, row) -> { Name = column.Name.Replace("customDimensions_", ""); Value = dataFromJson row })
                             let message = item |> Seq.tryFind (fun (column, _) -> column.Name = "message") |> Option.map (fun (_, row) -> dataFromJson row)
                             yield

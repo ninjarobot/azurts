@@ -93,9 +93,7 @@ module Payload =
         elif severity = 2 then ":warning:"
         else ":information_source:"
     
-    let private toTitleCase = System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase
-    
-    let dataFromJson (json:Chiron.Json) =
+    let private dataFromJson (json:Chiron.Json) =
         match json with
         | Chiron.Json.String s ->
             let len = s.Length
@@ -127,7 +125,7 @@ module Payload =
                             let fields =
                                 item
                                 |> Seq.filter (fun (column, _) -> column.Name <> "message")
-                                |> Seq.filter (fun (column, row) -> match row with | Json.Null _ -> false | _ -> true )
+                                |> Seq.filter (fun (_, row) -> match row with | Json.Null _ -> false | _ -> true )
                                 |> Seq.map (fun (column, row) -> LabeledText(column.Name.Replace("customDimensions_", ""), dataFromJson row ))
                             let message = item |> Seq.tryFind (fun (column, _) -> column.Name = "message") |> Option.map (fun (_, row) -> dataFromJson row)
                             yield
