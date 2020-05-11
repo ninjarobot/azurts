@@ -154,29 +154,26 @@ module Filters =
     /// Filters based on a column value in the search result data.
     let fieldValue (fieldName:string) (expectedValue:string) =
         fun (alert:LogAlert) ->
-            alert.Data.SearchResult.Tables |> Seq.tryHead |> Option.map
-                (fun table ->
-                    let importantAlerts =
-                        match table.Columns |> List.tryFindIndex (fun col -> col.Name.ToLowerInvariant().Contains(fieldName.ToLowerInvariant())) with
-                        | Some rowIndex ->
-                            let colNames = table.Columns |> List.map (fun c -> c.Name)
-                            seq {
-                                for row in table.Rows do
-                                    let lookup = Seq.zip colNames row |> dict
-                                    if lookup.[fieldName] = (expectedValue |> Json.serialize) then
-                                        yield row
-                                    //let d = row |> Seq.item rowIndex |> Json.tryDeserialize |> function Choice1Of2 s -> Some s | Choice2Of2 _ -> None
-                                    //if d = Some(expectedValue) then
-                                    //    yield row
-                            }
-                        | None -> Seq.empty
-                    let filteredTable = { table with Rows = importantAlerts |> List.ofSeq }
-                    {
-                        alert with Data = {
-                                alert.Data with SearchResult = {
-                                            alert.Data.SearchResult with
-                                                Tables = [ filteredTable ]
-                                        }
-                            }
-                    }
-                )
+            match alert.Data.SearchResult.Tables |> List.tryHead with
+            | Some table ->
+                match table.Columns |> List.tryFindIndex (fun col -> col.Name.ToLowerInvariant().Contains(fieldName.ToLowerInvariant())) with
+                | Some colIndex ->
+                    seq {
+                        for row in table.Rows do
+                            if row.Length > colIndex && row.[colIndex] = (expectedValue |> Json.serialize) then
+                                yield row
+                    } |> List.ofSeq |> function
+                    | [] -> None
+                    | importantAlerts ->
+                        let filteredTable = { table with Rows = importantAlerts }
+                        {
+                            alert with Data = {
+                                    alert.Data with SearchResult = {
+                                                alert.Data.SearchResult with
+                                                    Tables = [ filteredTable ]
+                                            }
+                                }
+                        } |> Some
+                | None -> None
+            | None ->
+                None
